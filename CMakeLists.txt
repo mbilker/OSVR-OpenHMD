@@ -3,49 +3,6 @@ project(OpenHMDPlugin)
 
 find_package(osvr REQUIRED)
 
-# OpenHMD
-set(OPENHMD_DIR "${CMAKE_CURRENT_LIST_DIR}/vendor/OpenHMD")
-include_directories(${OPENHMD_DIR}/include)
-set(OPENHMD_SOURCES
-	${OPENHMD_DIR}/src/openhmd.c
-	${OPENHMD_DIR}/src/platform-win32.c
-	${OPENHMD_DIR}/src/drv_dummy/dummy.c
-	${OPENHMD_DIR}/src/omath.c
-	${OPENHMD_DIR}/src/platform-posix.c
-	${OPENHMD_DIR}/src/fusion.c
-	)
-OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
-OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" OFF)
-OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
-
-if(OPENHMD_DRIVER_OCULUS_RIFT)
-	set(OPENHMD_SOURCES ${OPENHMD_SOURCES} 
-		${OPENHMD_DIR}/src/drv_oculus_rift/rift.c
-		${OPENHMD_DIR}/src/drv_oculus_rift/packet.c
-		)
-	add_definitions(-DDRIVER_OCULUS_RIFT)
-endif(OPENHMD_DRIVER_OCULUS_RIFT)
-
-if (OPENHMD_DRIVER_EXTERNAL)
-	set(OPENHMD_SOURCES ${OPENHMD_SOURCES} 
-		${OPENHMD_DIR}/src/drv_external/external.c
-		)
-	add_definitions(-DDRIVER_EXTERNAL)
-endif(OPENHMD_DRIVER_EXTERNAL)
-
-if (OPENHMD_DRIVER_ANDROID)
-	set(OPENHMD_SOURCES ${OPENHMD_SOURCES} 
-		${OPENHMD_DIR}/src/drv_android/android.c
-		)
-	add_definitions(-DDRIVER_ANDROID)
-endif(OPENHMD_DRIVER_ANDROID)
-
-add_definitions(-DOHMD_STATIC)
-
-if (WIN32)
-   	execute_process(COMMAND powershell -Command "(gc ${OPENHMD_DIR}/src/platform-win32.c) -replace '__stdcall DWORD', 'DWORD __stdcall' | Out-File ${OPENHMD_DIR}/src/platform-win32.c")
-endif(WIN32)
-
 # HIDAPI
 set(HIDAPI_DIR "${CMAKE_CURRENT_LIST_DIR}/vendor/hidapi")
 include_directories(${HIDAPI_DIR}/hidapi)
@@ -61,11 +18,14 @@ if (WIN32)
 endif(WIN32)
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	set (CMAKE_C_STANDARD 99)
+
    	set (HIDAPI_SOURCES ${HIDAPI_DIR}/libusb/hid.c)
    	find_package(PkgConfig REQUIRED)
    	pkg_search_module(LIBUSB REQUIRED libusb-1.0)
-   	set (LIBS ${LIBS} ${LIBUSB_LIBRARIES})
-   	include_directories(${LIBUSB_INCLUDE_DIRS})
+        pkg_search_module(OPENHMD REQUIRED openhmd)
+   	set (LIBS ${LIBS} ${LIBUSB_LIBRARIES} ${OPENHMD_LIBRARIES})
+   	include_directories(${LIBUSB_INCLUDE_DIRS} ${OPENHMD_INCLUDE_DIRS})
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # OSVR Plugin
@@ -79,8 +39,6 @@ osvr_add_plugin(NAME je_nourish_openhmd
     CPP # indicates we'd like to use the C++ wrapper
     SOURCES
     je_nourish_openhmd.cpp
-    "${CMAKE_CURRENT_BINARY_DIR}/je_nourish_openhmd_json.h"
-	${HIDAPI_SOURCES}
-	${OPENHMD_SOURCES})
+    "${CMAKE_CURRENT_BINARY_DIR}/je_nourish_openhmd_json.h")
 
-target_link_libraries(je_nourish_openhmd ${LIBS})
+target_link_libraries(je_nourish_openhmd ${LIBS} ${OPENHMD_LDFLAGS})
