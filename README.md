@@ -12,3 +12,30 @@ Then follow [the standard OSVR plugin build instructions](http://resource.osvr.c
 Tested on Windows, Linux and Mac. 64 bit binaries available on the releases page.
 
 The tracker device doesn't need configuration, but there are sample OSVR server config files for the DK1 display in the sample-configs folder.
+
+## mbilker's instructions for using this project
+
+The configuration here is my configuration used during SteelHacks 2017 at the University of Pittsburgh.
+
+1. Create a directory to store all the build files
+```bash
+mkdir -p ~/projects/oculus
+```
+2. Build and install the [libfunctionality](https://github.com/OSVR/libfunctionality) package
+```
+cd ~/projects/oculus
+git clone https://github.com/OSVR/libfunctionality
+cd libfunctionality
+mkdir build
+cd build
+cmake -GNinja -DCMAKE_INSTALL_PREFIX:PATH=/opt/osvr ..
+```
+3. Build and install the [OSVR-Core](https://github.com/OSVR/OSVR-Core) package
+   ```bash
+   cd ~/projects/oculus
+   git clone https://github.com/OSVR/OSVR-Core
+   cd OSVR-Core
+   mkdir build
+   cd build
+   cmake -GNinja -DCMAKE_INSTALL_PREFIX:PATH=/opt/osvr ..
+   ```
